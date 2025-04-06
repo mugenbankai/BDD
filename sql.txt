@@ -1,0 +1,173 @@
+1-) SELECT num_coureur_, nom_coureur
+FROM Coureur c
+JOIN Pays p ON c.ID_Pays = p.ID_Pays
+WHERE p.nom_pays = 'France';
+
+2-) SELECT c.num_coureur_, c.nom_coureur, p.nom_pays
+FROM Coureur c
+JOIN Equipe e ON c.num_equipe = e.num_equipe
+JOIN Pays p ON c.ID_Pays = p.ID_Pays
+WHERE e.nom_equipe = 'TOTALENERGIES';
+
+3-)SELECT DISTINCT c.nom_coureur
+FROM Coureur c
+WHERE c.num_coureur_ NOT IN (
+    SELECT DISTINCT num_coureur_
+    FROM participer
+    WHERE bonification_coureur IS NOT NULL AND bonification_coureur > '00:00:00'
+);
+
+4-)SELECT c.num_coureur_, c.nom_coureur
+FROM Coureur c
+WHERE c.num_coureur_ NOT IN (
+    SELECT DISTINCT num_coureur_
+    FROM participer
+);
+
+5-)SELECT DISTINCT v.nom_ville
+FROM Ville v
+WHERE v.num_ville IN (
+    SELECT num_ville FROM Etape
+    UNION
+    SELECT num_ville_1 FROM Etape
+);
+
+6-) SELECT v.nom_ville
+FROM Ville v
+JOIN Pays p ON v.ID_Pays = p.ID_Pays
+WHERE p.nom_pays = 'France'
+  AND v.num_ville NOT IN (
+    SELECT num_ville FROM Etape
+    UNION
+    SELECT num_ville_1 FROM Etape
+);
+
+7-a) SELECT 
+    c.nom_coureur, c.naissance_coureur, p.nom_pays, pa.num_etape
+FROM Coureur c
+JOIN participer pa ON c.num_coureur_ = pa.num_coureur_
+JOIN Pays p ON c.ID_Pays = p.ID_Pays;
+
+7-b) SELECT 
+    c.nom_coureur, c.naissance_coureur, p.nom_pays, pa.num_etape
+FROM Coureur c
+LEFT JOIN participer pa ON c.num_coureur_ = pa.num_coureur_
+JOIN Pays p ON c.ID_Pays = p.ID_Pays;
+
+8-)SELECT 
+    p.nom_pays, e.nom_equipe, c.nom_coureur
+FROM Coureur c
+JOIN Equipe e ON c.num_equipe = e.num_equipe
+JOIN Pays p ON c.ID_Pays = p.ID_Pays
+ORDER BY p.nom_pays, e.nom_equipe, c.nom_coureur;
+
+9-) SELECT TOP 1 *
+FROM Etape
+ORDER BY km_etape ASC;
+
+10-) SELECT 
+    nom_coureur,
+    DATEDIFF(YEAR, naissance_coureur, GETDATE()) 
+    - CASE 
+        WHEN MONTH(naissance_coureur) > MONTH(GETDATE()) 
+          OR (MONTH(naissance_coureur) = MONTH(GETDATE()) AND DAY(naissance_coureur) > DAY(GETDATE()))
+        THEN 1 ELSE 0 
+      END AS age
+FROM Coureur;
+
+11-) SELECT e.nom_equipe, COUNT(c.num_coureur_) AS nb_coureurs
+FROM Equipe e
+LEFT JOIN Coureur c ON e.num_equipe = c.num_equipe
+GROUP BY e.nom_equipe;
+
+12-a) WITH NbJoueurs AS (
+    SELECT e.nom_equipe, COUNT(c.num_coureur_) AS nb_coureurs
+    FROM Equipe e
+    LEFT JOIN Coureur c ON e.num_equipe = c.num_equipe
+    GROUP BY e.nom_equipe
+)
+SELECT * FROM NbJoueurs
+WHERE nb_coureurs >= X; -- Remplace X par un nombre
+
+12-b) SELECT e.nom_equipe,COUNT(c.num_coureur_) AS nb_coureurs
+FROM Equipe e
+JOIN Coureur c ON e.num_equipe = c.num_equipe
+GROUP BY e.nom_equipe
+HAVING COUNT(c.num_coureur_) >= X;  -- Remplace X par un nombre
+
+13-) SELECT 
+    c.nom_coureur,
+    -- Somme du temps en format hh:mm:ss
+    CAST(DATEADD(SECOND, SUM(DATEDIFF(SECOND, '00:00:00', p.temps_coureur)), '00:00:00') AS TIME) AS duree_totale,
+    MAX(p.temps_coureur) AS temps_max,
+    MIN(p.temps_coureur) AS temps_min,
+    -- Moyenne en format hh:mm:ss
+    CAST(DATEADD(SECOND, AVG(DATEDIFF(SECOND, '00:00:00', p.temps_coureur)), '00:00:00') AS TIME) AS temps_moyen
+FROM Coureur c
+JOIN participer p ON c.num_coureur_ = p.num_coureur_
+GROUP BY c.nom_coureur;
+
+
+14-) SELECT 
+    e.num_etape,
+    v1.nom_ville AS ville_depart,
+    v2.nom_ville AS ville_arrivee,
+    MIN(p.temps_coureur) AS temps_min,
+    MAX(p.temps_coureur) AS temps_max,
+    AVG(CAST(DATEDIFF(SECOND, '00:00:00', p.temps_coureur) AS FLOAT)) AS temps_moyen_sec
+FROM Etape e
+JOIN Ville v1 ON e.num_ville = v1.num_ville
+JOIN Ville v2 ON e.num_ville_1 = v2.num_ville
+JOIN participer p ON e.num_etape = p.num_etape
+GROUP BY e.num_etape, v1.nom_ville, v2.nom_ville;
+
+15-) SELECT TOP 3
+    p.num_coureur_,
+    p.temps_coureur,
+    e.num_etape
+FROM participer p
+JOIN Etape e ON p.num_etape = e.num_etape
+WHERE e.type_etape = 'Montagne'
+ORDER BY p.temps_coureur ASC;
+
+16-) SELECT SUM(km_etape) AS total_km
+FROM Etape;
+
+17-) SELECT SUM(km_etape) AS total_km_haute_montagne
+FROM Etape
+WHERE type_etape = 'Montagne';
+ 
+18-)SELECT c.nom_coureur, COUNT(p.num_etape) AS nb_etapes
+FROM Coureur c
+JOIN participer p ON c.num_coureur_ = p.num_coureur_
+GROUP BY c.nom_coureur
+HAVING COUNT(p.num_etape) >= X; 
+
+19-) SELECT c.nom_coureur
+FROM Coureur c
+JOIN participer p ON c.num_coureur_ = p.num_coureur_
+GROUP BY c.num_coureur_, c.nom_coureur
+HAVING COUNT(DISTINCT p.num_etape) = (SELECT COUNT(*) FROM Etape);
+ 
+
+20-) SELECT 
+    c.nom_coureur,
+    c.num_equipe,
+    c.ID_Pays,
+    SUM(DATEDIFF(SECOND, '00:00:00', p.temps_coureur)) AS temps_total_sec
+FROM Coureur c
+JOIN participer p ON c.num_coureur_ = p.num_coureur_
+WHERE p.num_etape <= 13
+GROUP BY c.nom_coureur, c.num_equipe, c.ID_Pays
+ORDER BY temps_total_sec ASC;
+
+
+21-) SELECT 
+    e.nom_equipe,
+    SUM(DATEDIFF(SECOND, '00:00:00', p.temps_coureur)) AS temps_total_sec
+FROM Equipe e
+JOIN Coureur c ON e.num_equipe = c.num_equipe
+JOIN participer p ON c.num_coureur_ = p.num_coureur_
+WHERE p.num_etape <= 13
+GROUP BY e.nom_equipe
+ORDER BY temps_total_sec ASC;
