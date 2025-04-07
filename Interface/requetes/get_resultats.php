@@ -19,10 +19,20 @@ if (!$stmt) {
 }
 
 $resultats = [];
+
 while ($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) {
+    // Champs temporels à formater
+    $timeFields = ['temps_coureur', 'bonification_coureur', 'gap_sec', 'penalite_coureur'];
+
+    foreach ($timeFields as $field) {
+        if (isset($row[$field]) && $row[$field] instanceof DateTime) {
+            $row[$field] = $row[$field]->format('H:i:s');
+        }
+    }
+
     $resultats[] = $row;
 }
 
-// Affiche les résultats en JSON
+// Affiche les résultats en JSON formaté
 echo json_encode($resultats, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 ?>
