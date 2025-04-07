@@ -1,7 +1,7 @@
 <?php
 require_once("../connexion.php"); // Connexion à la base
 
-$sql = "SELECT TOP (1000) 
+$sql = "SELECT 
             [num_etape],
             [num_coureur_],
             [temps_coureur],
@@ -10,7 +10,7 @@ $sql = "SELECT TOP (1000)
             [gap_sec],
             [penalite_coureur]
         FROM [participer]
-        ORDER BY [Rang] ASC"; // Tri par Rang croissant
+        ORDER BY [num_etape] ASC, [Rang] ASC"; // Tri d'abord par étape, puis par rang
 
 $stmt = sqlsrv_query($conn, $sql);
 

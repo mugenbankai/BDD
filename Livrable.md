@@ -189,7 +189,7 @@ WHERE v.num_ville IN (
 ### 6. Requête 6
 
 ```sql
-SELECT v.nom_ville
+SELECT v.num_ville, v.nom_ville
 FROM Ville v
 JOIN Pays p ON v.ID_Pays = p.ID_Pays
 WHERE p.nom_pays = 'France'
@@ -197,7 +197,8 @@ WHERE p.nom_pays = 'France'
     SELECT num_ville FROM Etape
     UNION
     SELECT num_ville_1 FROM Etape
-);
+  );
+
 ```
 
 ### 7. Requête 7 a
@@ -234,9 +235,11 @@ ORDER BY p.nom_pays, e.nom_equipe, c.nom_coureur;
 ### 9. Requête 9
 
 ```sql
-SELECT TOP 1 *
+SELECT *
 FROM Etape
-ORDER BY km_etape ASC;
+WHERE km_etape = (
+    SELECT MIN(km_etape) FROM Etape
+);
 ```
 
 ### 10. Requête 10
